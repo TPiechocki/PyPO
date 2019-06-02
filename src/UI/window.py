@@ -144,7 +144,6 @@ class UINotifications(QFrame, threading.Thread):
         :return: None
         """
         while len(self.messages) and not self.finish_work:
-            print(self.messages[0])
             self.__text.setText(self.messages.pop(0))
             handle.wait(timeout=2)
         self.__text.clear()
