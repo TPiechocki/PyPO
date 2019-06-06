@@ -15,3 +15,8 @@ class SquareWorld(World):
         self.setNeighbours()
 
         self._window = UIWindow(controller, x, y)
+
+    def recreateWindow(self, controller):
+        self._window = UIWindow(controller, self.getSizeX(), self.getSizeY())
+        self._window.setPlayer(self.getPlayer())
+

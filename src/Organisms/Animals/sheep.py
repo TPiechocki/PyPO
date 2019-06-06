@@ -16,4 +16,3 @@ class Sheep(Animal):
 
     def __repr__(self) -> str:
         return "Owca"
-

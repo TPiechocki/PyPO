@@ -3,6 +3,7 @@
 import random
 from abc import ABC
 
+from Organisms.organism import Organism
 from World.Directions.direction import Direction
 from World.Directions.squareDirection import SquareDirection
 
@@ -44,7 +45,7 @@ class Field(ABC):
     def setOrganism(self, org):
         self._organism = org
 
-    def getOrganism(self):
+    def getOrganism(self) -> Organism:
         return self._organism
 
     def getX(self):
@@ -56,13 +57,13 @@ class Field(ABC):
     def getDirection(self) -> Direction:
         return self._direction
 
-    def getNeighbour(self, direction):
+    def getNeighbour(self, direction: Direction) -> 'Field':
         return self._neighbours[direction._value_[0]]
 
     def getFullNeighbours(self):
         index = 0
         temp = [None] * self._full_neighbours
-        for i in range(0, self._direction.amountOfDirections):
+        for i in range(0, self._direction.amountOfDirections()):
             if self._neighbours[i] is not None:
                 temp[index] = self._neighbours[i]
                 index += 1

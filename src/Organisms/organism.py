@@ -19,7 +19,7 @@ class Organism(ABC):
 
         self._strength = 0
         self._initiative = 0
-        self.__age = 0
+        self._age = 0
         self.__killed = False
         self._direction = None
 
@@ -79,7 +79,7 @@ class Organism(ABC):
         self._strength += x
 
     def addOneAge(self):
-        self.__age += 1
+        self._age += 1
 
     def getX(self):
         return self._x
@@ -91,7 +91,7 @@ class Organism(ABC):
         return self._initiative
 
     def getAge(self):
-        return self.__age
+        return self._age
 
     def getStrength(self):
         return self._strength

@@ -14,6 +14,7 @@ def main():
     QtWidgets.QApplication.setStyle("Fusion")
 
     window = QtWidgets.QMainWindow()
+    window.setWindowTitle("sig")
 
     Game(window)
     sys.exit(app.exec_())

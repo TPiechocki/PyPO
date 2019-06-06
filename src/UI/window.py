@@ -5,10 +5,13 @@ import re
 import threading
 import time
 
-from PyQt5 import QtWidgets
-from PyQt5.QtWidgets import QFrame, QPushButton, QVBoxLayout, QHBoxLayout, QWidget
+from PyQt5 import QtWidgets, QtCore
+from PyQt5.QtWidgets import QFrame, QPushButton, QVBoxLayout, QHBoxLayout, QWidget, QAction, QLabel
 
+from Organisms.player import Player
 from UI.board import UISquareBoard
+from World.Directions.squareDirection import SquareDirection
+
 
 class UIWindow(QtWidgets.QFrame):
     def __init__(self, controller, x, y):
@@ -19,7 +22,7 @@ class UIWindow(QtWidgets.QFrame):
 
         """ side panel """
         self.__info = UIInfo(controller)
-        self.__board = UISquareBoard(x, y, self)
+        self.__board = UISquareBoard(controller, x, y, self)
         self.__notif_label = QtWidgets.QLabel("")
         self.__notification = UINotifications(self.__notif_label)
 
@@ -67,6 +70,12 @@ class UIWindow(QtWidgets.QFrame):
                     buttons[i][j].setStyleSheet(string)
                     buttons[i][j].repaint()
 
+    def setPlayer(self, player):
+        self.__info.setPlayer(player)
+
+    def refreshInfo(self):
+        self.__info.refreshInfo()
+
 class UIInfo(QFrame):
     """
     Side panel with buttons to control and basic info about immortality
@@ -74,24 +83,54 @@ class UIInfo(QFrame):
     def __init__(self, controller, parent=None):
         super().__init__(parent)
         self.controller = controller
+        self.__player: Player = None
+
+        self.setMinimumWidth(400)
 
         self.__new_turn = QPushButton("Nowa tura")
-        self.__new_turn.clicked.connect(self.newTurn)
+        self.__new_turn.clicked.connect(self.controller.newTurn)
 
         self.__new_game = QPushButton("Nowa gra")
-        self.__new_game.clicked.connect(self.newGame)
+        self.__new_game.clicked.connect(self.controller.newGame)
 
         self.__immortality = QPushButton("Nieśmiertelność")
+        self.__immortality.clicked.connect(self.controller.setImmortality)
+
+        self.__immo_info = QLabel("")
+        self.__immo_info.setFixedHeight(50)
+        self.__immo_info.setAlignment(QtCore.Qt.AlignCenter)
 
         self.__save_game = QPushButton("Zapisz")
+        self.__save_game.clicked.connect(self.controller.saveGame)
 
         self.__load_game = QPushButton("Wczytaj")
+        self.__load_game.clicked.connect(self.controller.loadGame)
+
+        self.__dir_up = QAction()
+        self.__dir_up.setShortcut(QtCore.Qt.Key_Up)
+        self.__dir_up.triggered.connect(lambda: self.controller.changeDirection(SquareDirection.NORTH))
+        self.addAction(self.__dir_up)
+
+        self.__dir_right = QAction()
+        self.__dir_right.setShortcut(QtCore.Qt.Key_Right)
+        self.__dir_right.triggered.connect(lambda: self.controller.changeDirection(SquareDirection.EAST))
+        self.addAction(self.__dir_right)
+
+        self.__dir_down = QAction()
+        self.__dir_down.setShortcut(QtCore.Qt.Key_Down)
+        self.__dir_down.triggered.connect(lambda: self.controller.changeDirection(SquareDirection.SOUTH))
+        self.addAction(self.__dir_down)
+
+        self.__dir_left = QAction()
+        self.__dir_left.setShortcut(QtCore.Qt.Key_Left)
+        self.__dir_left.triggered.connect(lambda: self.controller.changeDirection(SquareDirection.WEST))
+        self.addAction(self.__dir_left)
 
         vbox = QVBoxLayout()
 
         vbox.addWidget(self.__new_turn)
         vbox.addWidget(self.__immortality)
-        vbox.addSpacing(40)
+        vbox.addWidget(self.__immo_info)
         vbox.addWidget(self.__new_game)
         vbox.addWidget(self.__save_game)
         vbox.addWidget(self.__load_game)
@@ -99,19 +138,16 @@ class UIInfo(QFrame):
 
         self.setLayout(vbox)
 
-    def newTurn(self):
-        """
-        Make turn action
-        :return: None
-        """
-        self.controller.newTurn()
+    def setPlayer(self, player):
+        self.__player = player
 
-    def newGame(self):
-        """
-        Start the new game; action for a proper button
-        :return: None
-        """
-        self.controller.newGame()
+    def refreshInfo(self):
+        if (self.__player.isImmortalityReady() and not self.__player.isKilled()):
+            self.__immortality.setEnabled(True)
+        else:
+            self.__immortality.setEnabled(False)
+
+        self.__immo_info.setText(self.__player.immortalityStatus())
 
 
 class UINotifications(QFrame, threading.Thread):
@@ -143,10 +179,14 @@ class UINotifications(QFrame, threading.Thread):
         :param handle: threading.Event() object so it's possible to pause sleep time
         :return: None
         """
-        while len(self.messages) and not self.finish_work:
-            self.__text.setText(self.messages.pop(0))
-            handle.wait(timeout=2)
-        self.__text.clear()
+        try:
+            while len(self.messages) and not self.finish_work:
+                self.__text.setText(self.messages.pop(0))
+                handle.wait(timeout=2)
+            self.__text.clear()
+            self.finish_work = False
+        except:
+            pass
 
     def renderNotifications(self, messages):
         """
@@ -156,7 +196,7 @@ class UINotifications(QFrame, threading.Thread):
         """
         self.stopNotifications()
 
-        self.messages = copy.deepcopy(messages)
+        self.messages = messages
         self.finish_work = False
         self.worker = threading.Thread(target=self.work, args=(self.worker_handle,))
         self.worker.start()
@@ -169,7 +209,8 @@ class UINotifications(QFrame, threading.Thread):
         if self.worker and self.worker.isAlive():
             self.finish_work = True
             self.worker_handle.set()
-            while self.finish_work and self.worker.isAlive():
+            while self.finish_work or\
+                    self.worker.isAlive():
                 time.sleep(0.001)
 
         self.worker_handle.clear()

@@ -1,23 +1,19 @@
 #  Copyright (c) 2019. Created by Tomasz Piechocki
 
 import random
-from abc import ABC
-from typing import List
+from abc import ABC, abstractmethod
 
 from PyQt5 import QtWidgets
 
-from World.Field import field
-
 
 class World(ABC):
-    _fields: List[List[field.Field]]
-
     # noinspection PyTypeChecker
     def __init__(self, x, y):
         self.__x_size = x
         self.__y_size = y
 
         self.__entities = []
+        self.__hogweeds = []
         self.__player = None
 
         self.__notifications = []
@@ -60,9 +56,14 @@ class World(ABC):
             if i.isKilled():
                 self.__entities.remove(i)
 
+        for i in self.__hogweeds:
+            if i.isKilled():
+                self.__hogweeds.remove(i)
+
         #self._window.repaint()
         self.displayWorld()
         self.displayNotifications()
+        self._window.refreshInfo()
 
     def displayWorld(self):
         """
@@ -70,6 +71,13 @@ class World(ABC):
         :return: None
         """
         self._window.drawFields(self._fields)
+
+    def refreshInfo(self):
+        """
+        Refresh info about immortality
+        :return: None
+        """
+        self._window.refreshInfo()
 
     def addOrganism(self, org):
         """
@@ -80,6 +88,10 @@ class World(ABC):
         self.__entities.append(org)
         if self._fields[org.getX()][org.getY()].isEmpty():
             self._fields[org.getX()][org.getY()].setOrganism(org)
+
+        from Organisms.Plants.hogweed import Hogweed
+        if isinstance(org, Hogweed):
+            self.__hogweeds.append(org)
 
     def setOrganismOnBoard(self, org):
         """
@@ -96,7 +108,7 @@ class World(ABC):
         :return: None
         """
         self.__player = player
-        self._window.setPlayer()
+        self._window.setPlayer(player)
 
     def getPlayer(self):
         """
@@ -105,7 +117,7 @@ class World(ABC):
         """
         return self.__player
 
-    def getField(self, x, y) -> field.Field:
+    def getField(self, x, y) -> 'Field':
         """
         Get field object from the board
         :param x: x coordinate
@@ -114,7 +126,7 @@ class World(ABC):
         """
         return self._fields[x][y]
 
-    def getRandomEmptyField(self) -> field.Field:
+    def getRandomEmptyField(self) -> 'Field':
         """
         Get random empty field
         :return: Random empty field
@@ -133,6 +145,9 @@ class World(ABC):
     def getSizeY(self):
         return self.__y_size
 
+    def getHogweeds(self):
+        return self.__hogweeds
+
     """ Notifications """
 
     def displayNotifications(self):
@@ -141,6 +156,13 @@ class World(ABC):
         :return: None
         """
         self._window.displayNotifications(self.__notifications)
+
+    def stopNotifications(self):
+        """
+        Stop displaying notifications without clearing
+        :return: None
+        """
+        self._window.stopNotifications()
 
     def clearNotifications(self):
         """
@@ -166,4 +188,16 @@ class World(ABC):
         """
         self._window.stopNotifications()
         self.__notifications.insert(0, msg)
-        self._window.displayNotifications()
+        self._window.displayNotifications(self.__notifications)
+
+    @abstractmethod
+    def recreateWindow(self, controller):
+        pass
+
+    def __getstate__(self):
+        return (self.__x_size, self.__y_size, self.__entities, self.__player, self._fields, self.__notifications,
+                self.__hogweeds)
+
+    def __setstate__(self, state):
+        self.__x_size, self.__y_size, self.__entities, self.__player, self._fields,\
+        self.__hogweeds, self.__notifications = state

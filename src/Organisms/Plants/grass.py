@@ -1,18 +1,17 @@
 #  Copyright (c) 2019. Created by Tomasz Piechocki
 
-from Organisms.animal import Animal
+from Organisms.plant import Plant
 
-class Wolf(Animal):
+class Grass(Plant):
     def __init__(self, x, y, wrld):
         super().__init__(x, y, wrld)
-        self._strength = 9
-        self._initiative = 5
+        self._strength = 0
 
     def createNewInstance(self, x, y, wrld):
-        return Wolf(x, y, wrld)
+        return Grass(x, y, wrld)
 
     def color(self) -> str:
-        return "gray"
+        return "chartreuse"
 
     def __repr__(self) -> str:
-        return "Wilk"
+        return "Trawa"

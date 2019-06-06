@@ -1,5 +1,6 @@
 #  Copyright (c) 2019. Created by Tomasz Piechocki
 
+from functools import partial
 from abc import ABCMeta
 
 from PyQt5.QtWidgets import QFrame, QGridLayout, QPushButton
@@ -24,7 +25,7 @@ class UIBoard(QFrame):
 
 
 class UISquareBoard(UIBoard):
-    def __init__(self, x, y, parent=None):
+    def __init__(self, controller, x, y, parent=None):
         super().__init__(parent)
 
         self.setMaximumWidth(1000)
@@ -74,6 +75,8 @@ class UISquareBoard(UIBoard):
                 button.setStyleSheet(string)
 
                 layout.addWidget(button, j, i)
+
                 self._buttons[i][j] = button
+                self._buttons[i][j].clicked.connect(partial(controller.addOrganism, i, j))
 
         self.setLayout(layout)
