@@ -16,7 +16,8 @@ def main():
     window = QtWidgets.QMainWindow()
     window.setWindowTitle("sig")
 
-    Game(window)
+    game = Game(window)
+    app.aboutToQuit.connect(game.stopNotifications)
     sys.exit(app.exec_())
 
 

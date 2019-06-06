@@ -207,3 +207,6 @@ class Game:
                     self.__world.addOrganism(CyberSheep(x, y, self.__world))
 
         self.__world.displayWorld()
+
+    def stopNotifications(self):
+        self.__world.clearNotifications()
